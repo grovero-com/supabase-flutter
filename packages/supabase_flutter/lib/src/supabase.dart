@@ -92,8 +92,7 @@ class Supabase {
       schema: schema,
       storageRetryAttempts: storageRetryAttempts,
       realtimeClientOptions: realtimeClientOptions,
-      gotrueAsyncStorage:
-          pkceAsyncStorage ?? SharedPreferencesGotrueAsyncStorage(),
+      gotrueAsyncStorage: pkceAsyncStorage ?? HiveGotrueAsyncStorage(),
       authFlowType: authFlowType,
     );
     _instance._debugEnable = debug ?? kDebugMode;

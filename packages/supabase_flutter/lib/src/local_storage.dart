@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const _hiveBoxName = 'supabase_authentication';
 const supabasePersistSessionKey = 'SUPABASE_PERSIST_SESSION_KEY';
 
 /// LocalStorage is used to persist the user session in the device.
@@ -84,71 +80,59 @@ class HiveLocalStorage extends LocalStorage {
   ///   * <https://docs.hivedb.dev/#/advanced/encrypted_box?id=encrypted-box>
   static String? encryptionKey;
 
+  static const String _boxName = "supabase_authentication";
+
+  static Box<String> get box =>
+      Hive.box(name: _boxName, encryptionKey: encryptionKey);
+
   static Future<void> _initialize() async {
-    HiveCipher? encryptionCipher;
-    if (encryptionKey != null) {
-      encryptionCipher = HiveAesCipher(base64Url.decode(encryptionKey!));
-    }
-    await Hive.initFlutter('auth');
-    await Hive.openBox(_hiveBoxName, encryptionCipher: encryptionCipher);
+    box.isOpen;
   }
 
   static Future<bool> _hasAccessToken() {
     return Future.value(
-      Hive.box(_hiveBoxName).containsKey(
+      box.containsKey(
         supabasePersistSessionKey,
       ),
     );
   }
 
   static Future<String?> _accessToken() {
-    return Future.value(
-      Hive.box(_hiveBoxName).get(supabasePersistSessionKey) as String?,
-    );
+    return Future.value(box.get(supabasePersistSessionKey));
   }
 
   static Future<void> _removePersistedSession() {
-    return Hive.box(_hiveBoxName).delete(supabasePersistSessionKey);
+    box.delete(supabasePersistSessionKey);
+    return Future.value();
   }
 
-  static Future<void> _persistSession(String persistSessionString) {
+  static Future<void> _persistSession(String persistSessionString) async {
     // Flush after X amount of writes
-    return Hive.box(_hiveBoxName)
-        .put(supabasePersistSessionKey, persistSessionString);
+    box.put(supabasePersistSessionKey, persistSessionString);
+    return Future.value();
   }
 }
 
 /// local storage to store pkce flow code verifier.
-class SharedPreferencesGotrueAsyncStorage extends GotrueAsyncStorage {
-  SharedPreferencesGotrueAsyncStorage() {
-    _initialize();
-  }
+class HiveGotrueAsyncStorage implements GotrueAsyncStorage {
+  static const String _boxName = "gotrue";
 
-  final Completer<void> _initializationCompleter = Completer();
+  Box<String> get box => Hive.box(name: _boxName);
 
-  late final SharedPreferences _prefs;
-
-  Future<void> _initialize() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    _prefs = await SharedPreferences.getInstance();
-    _initializationCompleter.complete();
+  @override
+  Future<String?> getItem({required String key}) {
+    return Future.value(box.get(key));
   }
 
   @override
-  Future<String?> getItem({required String key}) async {
-    await _initializationCompleter.future;
-    return _prefs.getString(key);
+  Future<void> removeItem({required String key}) {
+    box.delete(key);
+    return Future.value();
   }
 
   @override
-  Future<void> removeItem({required String key}) async {
-    await _initializationCompleter.future;
-    await _prefs.remove(key);
-  }
-
-  @override
-  Future<void> setItem({required String key, required String value}) async {
-    await _initializationCompleter.future;
-    await _prefs.setString(key, value);
+  Future<void> setItem({required String key, required String value}) {
+    box.put(key, value);
+    return Future.value();
   }
 }

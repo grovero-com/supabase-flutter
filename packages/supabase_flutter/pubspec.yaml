@@ -14,16 +14,15 @@ dependencies:
   crypto: ^3.0.2
   flutter:
     sdk: flutter
-  hive: ^2.2.1
-  hive_flutter: ^1.1.0
+  hive: ^4.0.0-dev.2
+  isar_flutter_libs: ^4.0.0-dev.14
+  path_provider: ^2.1.1
   http: '>=0.13.4 <2.0.0'
   meta: ^1.7.0
   sign_in_with_apple: '>=4.3.0 <6.0.0'
   supabase: ^1.11.11
   url_launcher: ^6.1.2
   webview_flutter: ^4.0.0
-  path_provider: ^2.0.0
-  shared_preferences: ^2.0.0
 
 dev_dependencies:
   dart_jsonwebtoken: ^2.4.1
